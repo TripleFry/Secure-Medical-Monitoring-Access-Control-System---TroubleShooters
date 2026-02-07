@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical Control Center</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            margin: 20px auto;
+            width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .alert {
+            color: red;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .safe {
+            color: #00ff88;
+            font-size: 22px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Secure Medical Monitoring Dashboard</h1>
+
+    <div class="card">
+        <h2>Access Status</h2>
+        <p id="access" class="safe">No activity</p>
+    </div>
+
+    <div class="card">
+        <h2>Alert Status</h2>
+        <p id="alert" class="safe">None</p>
+    </div>
+
+<script>
+async function fetchData() {
+    const res = await fetch("/data");
+    const data = await res.json();
+
+    const access = document.getElementById("access");
+    const alert = document.getElementById("alert");
+
+    access.innerText = data.access_status;
+    alert.innerText = data.alert;
+
+    // Change color based on alert
+    if (data.alert !== "None") {
+        alert.className = "alert";
+    } else {
+        alert.className = "safe";
+    }
+}
+
+setInterval(fetchData, 1000);
+</script>
+
+</body>
+</html>
