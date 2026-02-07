@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Alerts</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <div class="sidebar">
+        <h2>Menu</h2>
+        <div class="nav">
+            <a href="/" class="nav-item">Dashboard</a>
+            <a href="/charts" class="nav-item">Charts</a>
+            <a href="/alerts" class="nav-item active">Alerts</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <h1>Security Alerts</h1>
+
+        <div class="card">
+            <h2>Intruder Snapshot</h2>
+            <img id="intruderImg"
+                 src=""
+                 style="max-width:400px; border-radius:12px;">
+        </div>
+    </div>
+
+</div>
+
+<script>
+window.onload = async function () {
+    try {
+        const res = await fetch("/data");
+        const data = await res.json();
+
+        console.log("Loaded intruder image:", data.intruder_image);
+
+        if (data.intruder_image) {
+            document.getElementById("intruderImg").src =
+                "/" + data.intruder_image + "?t=" + Date.now();
+        }
+    } catch (err) {
+        console.log("Error loading intruder image", err);
+    }
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vitals Charts</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Menu</h2>
+
+        <div class="nav">
+            <a href="/" class="nav-item">Dashboard</a>
+            <a href="/charts" class="nav-item active">Charts</a>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="top-bar">
+            <h1>Vitals History</h1>
+            <button id="themeToggle" class="toggle-btn">
+                🌙 Dark Mode
+            </button>
+        </div>
+
+        <div class="card">
+            <canvas id="vitalsChart" height="120"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/charts.js"></script>
+</body>
+</html>

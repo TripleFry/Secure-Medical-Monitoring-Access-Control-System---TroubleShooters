@@ -1,73 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Medical Control Center</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
-            text-align: center;
-            padding-top: 50px;
-        }
-
-        .card {
-            background: #1e1e1e;
-            padding: 20px;
-            margin: 20px auto;
-            width: 300px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .alert {
-            color: red;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .safe {
-            color: #00ff88;
-            font-size: 22px;
-            font-weight: bold;
-        }
-    </style>
+    <title>Medical Monitoring Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-    <h1>Secure Medical Monitoring Dashboard</h1>
+<div class="app">
 
-    <div class="card">
-        <h2>Access Status</h2>
-        <p id="access" class="safe">No activity</p>
+    <!-- Sidebar -->
+   <div class="sidebar">
+    <h2>Menu</h2>
+
+    <div class="nav">
+        <a href="/" class="nav-item">Dashboard</a>
+        <a href="/charts" class="nav-item">Charts</a>
+         <a href="/alerts" class="nav-item">Alerts</a>
+
     </div>
 
-    <div class="card">
-        <h2>Alert Status</h2>
-        <p id="alert" class="safe">None</p>
+    <h2 style="margin-top:30px;">User Profile</h2>
+
+    <div class="profile-item">
+        <label>Name</label>
+        <p id="name">John Doe</p>
     </div>
 
-<script>
-async function fetchData() {
-    const res = await fetch("/data");
-    const data = await res.json();
+    <div class="profile-item">
+        <label>Age</label>
+        <p id="age">--</p>
+    </div>
 
-    const access = document.getElementById("access");
-    const alert = document.getElementById("alert");
+    <div class="profile-item">
+        <label>Gender</label>
+        <p id="gender">--</p>
+    </div>
 
-    access.innerText = data.access_status;
-    alert.innerText = data.alert;
+    <div class="profile-item">
+        <label>Smoking</label>
+        <p id="smoking">--</p>
+    </div>
 
-    // Change color based on alert
-    if (data.alert !== "None") {
-        alert.className = "alert";
-    } else {
-        alert.className = "safe";
-    }
-}
+    <div class="profile-item">
+        <label>Hypertension</label>
+        <p id="hypertension">--</p>
+    </div>
+</div>
 
-setInterval(fetchData, 1000);
-</script>
+    <!-- Main Dashboard -->
+    <div class="main">
 
+        <div class="top-bar">
+            <h1>🩺 Secure Medical Monitoring System</h1>
+            <button id="themeToggle" class="toggle-btn">
+                🌙 Dark Mode
+            </button>
+        </div>
+
+        <div class="grid">
+
+            <div class="card">
+                <h2>Access Status</h2>
+                <p id="access">--</p>
+            </div>
+
+            <div class="card">
+                <h2>Medical Alert</h2>
+                <p id="alert">--</p>
+            </div>
+
+            <div class="card">
+                <h2>Heart Rate</h2>
+                <p class="vital"><span id="hr">--</span> bpm</p>
+            </div>
+
+            <div class="card">
+                <h2>SpO₂</h2>
+                <p class="vital"><span id="spo2">--</span> %</p>
+            </div>
+
+            <div class="card">
+                <h2>Body Temperature</h2>
+                <p class="vital"><span id="temp">--</span> °C</p>
+            </div>
+
+            <div class="card">
+                <h2>Risk Level</h2>
+                <p id="risk" class="vital">--</p>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="/static/script.js"></script>
 </body>
 </html>
