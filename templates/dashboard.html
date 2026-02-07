@@ -1,99 +1,262 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Medical Monitoring Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HealthGuard Medical System</title>
+    <link rel="stylesheet" href="/static/medical.css">
 </head>
+
 <body>
 
-<div class="app">
-
-    <!-- Sidebar -->
-   <div class="sidebar">
-    <h2>Menu</h2>
-
-    <div class="nav">
-        <a href="/" class="nav-item">Dashboard</a>
-        <a href="/charts" class="nav-item">Charts</a>
-         <a href="/alerts" class="nav-item">Alerts</a>
-
-    </div>
-
-    <h2 style="margin-top:30px;">User Profile</h2>
-
-    <div class="profile-item">
-        <label>Name</label>
-        <p id="name">John Doe</p>
-    </div>
-
-    <div class="profile-item">
-        <label>Age</label>
-        <p id="age">--</p>
-    </div>
-
-    <div class="profile-item">
-        <label>Gender</label>
-        <p id="gender">--</p>
-    </div>
-
-    <div class="profile-item">
-        <label>Smoking</label>
-        <p id="smoking">--</p>
-    </div>
-
-    <div class="profile-item">
-        <label>Hypertension</label>
-        <p id="hypertension">--</p>
-    </div>
-</div>
-
-    <!-- Main Dashboard -->
-    <div class="main">
-
-        <div class="top-bar">
-            <h1>🩺 Secure Medical Monitoring System</h1>
-            <button id="themeToggle" class="toggle-btn">
-                🌙 Dark Mode
-            </button>
-        </div>
-
-        <div class="grid">
-
-            <div class="card">
-                <h2>Access Status</h2>
-                <p id="access">--</p>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <div class="logo-icon">🏥</div>
+                <span>HealthGuard</span>
+            </a>
+            <div class="nav-menu">
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/charts" class="nav-link">Analytics</a>
+                <a href="/alerts" class="nav-link">Security</a>
+                <button class="theme-toggle" id="themeToggle">
+                    🌙 Dark Mode
+                </button>
+                <a href="/logout" class="btn btn-secondary">Logout</a>
             </div>
-
-            <div class="card">
-                <h2>Medical Alert</h2>
-                <p id="alert">--</p>
-            </div>
-
-            <div class="card">
-                <h2>Heart Rate</h2>
-                <p class="vital"><span id="hr">--</span> bpm</p>
-            </div>
-
-            <div class="card">
-                <h2>SpO₂</h2>
-                <p class="vital"><span id="spo2">--</span> %</p>
-            </div>
-
-            <div class="card">
-                <h2>Body Temperature</h2>
-                <p class="vital"><span id="temp">--</span> °C</p>
-            </div>
-
-            <div class="card">
-                <h2>Risk Level</h2>
-                <p id="risk" class="vital">--</p>
-            </div>
-
         </div>
     </div>
 
-</div>
+    <div class="app">
 
-<script src="/static/script.js"></script>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>Patient Information</h2>
+
+            <div class="profile-card">
+                <div class="profile-label">Patient Name</div>
+                <div class="profile-value" id="name">John Doe</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Age</div>
+                <div class="profile-value" id="age">--</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Gender</div>
+                <div class="profile-value" id="gender">--</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Smoking Status</div>
+                <div class="profile-value" id="smoking">--</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Hypertension</div>
+                <div class="profile-value" id="hypertension">--</div>
+            </div>
+
+            <h2 style="margin-top: 24px;">Quick Actions</h2>
+            <div class="sidebar-nav">
+                <a href="/alerts" class="sidebar-link">
+                    <span>🚨</span>
+                    <span>View Alerts</span>
+                </a>
+                <a href="/charts" class="sidebar-link">
+                    <span>📊</span>
+                    <span>View Analytics</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <div class="container">
+
+                <div class="page-header">
+                    <h1 class="page-title">Medical Monitoring Dashboard</h1>
+                    <p class="page-subtitle">Real-time patient vitals and security monitoring</p>
+                </div>
+
+                <!-- Alert Banner -->
+                <div id="alertBanner" style="display: none;"></div>
+
+                <!-- Security & Medical Status -->
+                <div class="grid grid-2 mb-32">
+                    <div class="card">
+                        <h3 class="card-title">🔐 Access Control Status</h3>
+                        <div id="access" class="card-value" style="font-size: 1.5rem;">Monitoring...</div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">⚕️ Medical Alert Status</h3>
+                        <div id="alert" class="card-value" style="font-size: 1.5rem;">All Systems Normal</div>
+                    </div>
+                </div>
+
+                <!-- Vital Signs -->
+                <h2 style="margin-bottom: 16px; color: var(--gray-700); font-size: 1.25rem;">📊 Vital Signs Monitor</h2>
+                <div class="grid grid-3">
+
+                    <div class="card">
+                        <h3 class="card-title">❤️ Heart Rate</h3>
+                        <div class="card-value">
+                            <span id="hr">--</span>
+                            <span class="card-unit">bpm</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-success" id="hrStatus">Normal Range</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🫁 Blood Oxygen (SpO₂)</h3>
+                        <div class="card-value">
+                            <span id="spo2">--</span>
+                            <span class="card-unit">%</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-success" id="spo2Status">Normal Range</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🌡️ Body Temperature</h3>
+                        <div class="card-value">
+                            <span id="temp">--</span>
+                            <span class="card-unit">°C</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-success" id="tempStatus">Normal Range</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Risk Assessment -->
+                <div class="card mt-32">
+                    <h3 class="card-title">🎯 Risk Assessment</h3>
+                    <div style="display: flex; align-items: center; gap: 16px; margin-top: 16px;">
+                        <div class="card-value" id="risk">Normal</div>
+                        <span class="badge badge-success" id="riskBadge">Low Risk</span>
+                    </div>
+                    <p style="margin-top: 12px; color: var(--gray-600);" id="riskDescription">
+                        All vitals within normal parameters. Continue routine monitoring.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Fetch dashboard data
+        let lastAlert = "";
+
+        async function fetchData() {
+            try {
+                const response = await fetch("/data");
+                const data = await response.json();
+
+                // Update access status
+                const accessEl = document.getElementById("access");
+                accessEl.textContent = data.access_status || "Monitoring...";
+
+                if (data.access_status?.toLowerCase().includes("authorized")) {
+                    accessEl.className = "card-value status-success";
+                } else if (data.access_status?.toLowerCase().includes("intruder")) {
+                    accessEl.className = "card-value status-danger";
+                    showAlertBanner("Security breach detected! Unauthorized access attempt.", "danger");
+                }
+
+                // Update alert
+                const alertEl = document.getElementById("alert");
+                alertEl.textContent = data.alert || "All Systems Normal";
+                if (data.alert && data.alert !== "All Clear") {
+                    alertEl.className = "card-value status-danger";
+                } else {
+                    alertEl.className = "card-value status-success";
+                }
+
+                // Update vitals
+                updateVital("hr", data.heart_rate, 60, 100);
+                updateVital("spo2", data.spo2, 95, 100);
+                updateVital("temp", data.temperature, 36.5, 37.5);
+
+                // Update risk
+                const riskEl = document.getElementById("risk");
+                const riskBadge = document.getElementById("riskBadge");
+                const riskDesc = document.getElementById("riskDescription");
+
+                const riskValue = data.risk || "Normal";
+                riskEl.textContent = riskValue;
+
+                if (riskValue === "High") {
+                    riskEl.className = "card-value status-danger";
+                    riskBadge.className = "badge badge-danger";
+                    riskBadge.textContent = "High Risk";
+                    riskDesc.textContent = "Immediate medical attention required. Vitals outside safe parameters.";
+                    showAlertBanner("⚠️ HIGH RISK: Patient requires immediate attention!", "danger");
+                } else if (riskValue === "Medium") {
+                    riskEl.className = "card-value status-warning";
+                    riskBadge.className = "badge badge-warning";
+                    riskBadge.textContent = "Medium Risk";
+                    riskDesc.textContent = "Monitoring recommended. Some vitals approaching threshold.";
+                } else {
+                    riskEl.className = "card-value status-success";
+                    riskBadge.className = "badge badge-success";
+                    riskBadge.textContent = "Low Risk";
+                    riskDesc.textContent = "All vitals within normal parameters. Continue routine monitoring.";
+                }
+
+                // Update profile
+                document.getElementById("name").textContent = data.name || "John Doe";
+                document.getElementById("age").textContent = data.age || "--";
+                document.getElementById("gender").textContent = data.gender || "--";
+                document.getElementById("smoking").textContent = data.smoking ? "Yes" : "No";
+                document.getElementById("hypertension").textContent = data.hypertension ? "Yes" : "No";
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function updateVital(id, value, min, max) {
+            const element = document.getElementById(id);
+            const statusElement = document.getElementById(id + "Status");
+
+            if (element && value !== undefined && value !== null) {
+                element.textContent = value;
+
+                if (statusElement) {
+                    if (value < min || value > max) {
+                        statusElement.className = "badge badge-danger";
+                        statusElement.textContent = "Outside Range";
+                    } else {
+                        statusElement.className = "badge badge-success";
+                        statusElement.textContent = "Normal Range";
+                    }
+                }
+            }
+        }
+
+        function showAlertBanner(message, type) {
+            const banner = document.getElementById("alertBanner");
+            banner.className = `alert alert-${type}`;
+            banner.textContent = message;
+            banner.style.display = "block";
+        }
+
+        // Auto-refresh every 2 seconds
+        setInterval(fetchData, 2000);
+        fetchData();
+    </script>
+
 </body>
+
 </html>

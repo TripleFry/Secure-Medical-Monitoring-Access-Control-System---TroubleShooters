@@ -39,22 +39,42 @@ while True:
         recognized = False
         name = "Intruder"
 
+        best_match_distance = float('inf')
+        best_match_name = None
+        
         for img_path in known_images:
             try:
                 result = DeepFace.verify(
                     img1_path=temp_img,
                     img2_path=img_path,
-                    enforce_detection=False,
-                    model_name="Facenet"
+                    enforce_detection=True,  # Ensure face is detected
+                    model_name="VGG-Face",  # More accurate model
+                    distance_metric="cosine"  # Use cosine similarity
                 )
 
-                if result["verified"]:
-                    name = os.path.basename(img_path).split(".")[0]
+                # Get the distance (lower = more similar)
+                distance = result["distance"]
+                
+                print(f"Comparing with {os.path.basename(img_path)}: distance={distance:.4f}")
+                
+                # Use stricter threshold (0.35 instead of default 0.68)
+                # Only accept if distance is less than 0.35 AND it's the best match
+                if distance < 0.35 and distance < best_match_distance:
+                    best_match_distance = distance
+                    best_match_name = os.path.basename(img_path).split(".")[0]
                     recognized = True
-                    break
 
-            except:
+            except Exception as e:
+                print(f"Error processing {os.path.basename(img_path)}: {str(e)}")
                 pass
+        
+        # Use the best match only if it's good enough
+        if recognized and best_match_distance < 0.35:
+            name = best_match_name
+            print(f"Best match: {name} with distance: {best_match_distance:.4f}")
+        else:
+            recognized = False
+            print(f"No good match found. Best distance: {best_match_distance:.4f}")
 
         if recognized:
             print("Authorized:", name)

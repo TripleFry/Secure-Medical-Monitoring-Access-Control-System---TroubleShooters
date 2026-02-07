@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, flash
 from event_engine import EventEngine
 from health_agent import HealthAgent
 from clinical_agent import ClinicalAgent
@@ -10,8 +10,25 @@ from db import get_connection
 from datetime import datetime
 from sqlalchemy import text
 
+# Import auth functions
+try:
+    from auth import create_users_table, create_user, authenticate_user, get_user_by_email
+    AUTH_ENABLED = True
+    # Try to create users table
+    try:
+        create_users_table()
+        print("✓ Users table initialized")
+    except Exception as e:
+        print(f"Warning: Could not create users table: {e}")
+        print("Authentication will use session-only mode")
+        AUTH_ENABLED = False
+except ImportError as e:
+    print(f"Warning: Auth module not available: {e}")
+    AUTH_ENABLED = False
+
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # For session management
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +57,78 @@ whatsapp_agent = WhatsAppAgent(
     TWILIO_FROM,
     TWILIO_TO
 )
+
+# Authentication routes
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        
+        if not email or not password:
+            return render_template("login.html", error="Email and password are required")
+        
+        if AUTH_ENABLED:
+            # Use database authentication with bcrypt
+            result = authenticate_user(email, password)
+            if result["success"]:
+                session["logged_in"] = True
+                session["user_id"] = result["user"]["id"]
+                session["user_email"] = result["user"]["email"]
+                session["user_name"] = result["user"]["full_name"]
+                session["user_role"] = result["user"]["role"]
+                return redirect(url_for("dashboard"))
+            else:
+                return render_template("login.html", error=result.get("error", "Login failed"))
+        else:
+            # Fallback: session-only mode (demo)
+            session["logged_in"] = True
+            session["user_email"] = email
+            return redirect(url_for("dashboard"))
+            
+    return render_template("login.html")
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        fullname = request.form.get("fullname")
+        role = request.form.get("role")
+        
+        if not all([email, password, fullname, role]):
+            return render_template("signup.html", error="All fields are required")
+        
+        if AUTH_ENABLED:
+            # Use database with bcrypt
+            result = create_user(email, password, fullname, role)
+            if result["success"]:
+                # Auto-login after signup
+                session["logged_in"] = True
+                session["user_id"] = result["user_id"]
+                session["user_email"] = email
+                session["user_name"] = fullname
+                session["user_role"] = role
+                return redirect(url_for("dashboard"))
+            else:
+                error_msg = result.get("error", "Signup failed")
+                if "Duplicate entry" in error_msg:
+                    error_msg = "This email is already registered"
+                return render_template("signup.html", error=error_msg)
+        else:
+            # Fallback: session-only mode (demo)
+            session["logged_in"] = True
+            session["user_email"] = email
+            session["user_name"] = fullname
+            session["user_role"] = role
+            return redirect(url_for("dashboard"))
+            
+    return render_template("signup.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 @app.route("/")
 def dashboard():
@@ -144,18 +233,27 @@ def health_check():
     if risk_result["risk"] == "High":
         engine.process_event("abnormal_vitals")
 
-        alert_message = f"""
-⚠️ MEDICAL ALERT
+        # Truncate advice to fit Twilio's 1600 character limit
+        max_advice_length = 800
+        truncated_advice = advice[:max_advice_length]
+        if len(advice) > max_advice_length:
+            truncated_advice += "..."
+
+        alert_message = f"""⚠️ MEDICAL ALERT
 
 Patient: {data.get("name", "Unknown")}
 Status: HIGH RISK
 
-Heart Rate: {data['heart_rate']} bpm
-SpO2: {data['spo2']}%
-Temperature: {data['temperature']}°C
+Vitals:
+• Heart Rate: {data['heart_rate']} bpm
+• SpO2: {data['spo2']}%
+• Temperature: {data['temperature']}°C
+• Age: {data.get('age', 'N/A')}
 
 Advice:
-{advice}
+{truncated_advice}
+
+Please check the dashboard for full details.
 """
         whatsapp_agent.send_alert(alert_message)
 
