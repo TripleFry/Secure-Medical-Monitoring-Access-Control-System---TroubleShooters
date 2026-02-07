@@ -10,7 +10,7 @@ async function fetchData() {
         const accessEl = document.getElementById("access");
         if (accessEl) {
             accessEl.innerText = data.access_status || "Monitoring...";
-            
+
             // Color code access status
             if (data.access_status?.toLowerCase().includes("authorized")) {
                 accessEl.style.color = "#10b981";
@@ -29,7 +29,7 @@ async function fetchData() {
         const alertEl = document.getElementById("alert");
         if (alertEl) {
             alertEl.innerText = data.alert || "All Clear";
-            
+
             // Animate if new alert
             if (data.alert && data.alert !== lastAlert) {
                 alertEl.classList.add('pulse-alert');
@@ -48,7 +48,7 @@ async function fetchData() {
         if (riskEl) {
             const riskValue = data.risk || "Normal";
             riskEl.innerText = riskValue;
-            
+
             // Color code risk level
             if (riskValue === "High") {
                 riskEl.style.background = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
@@ -84,36 +84,6 @@ function updateValue(elementId, value) {
 // Auto-refresh every 2 seconds
 setInterval(fetchData, 2000);
 fetchData();
-
-// Theme toggle functionality
-const toggleBtn = document.getElementById("themeToggle");
-
-if (toggleBtn) {
-    // Load saved theme preference
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light") {
-        document.body.classList.add("light-mode");
-        toggleBtn.innerText = "☀️ Light Mode";
-    } else {
-        toggleBtn.innerText = "🌙 Dark Mode";
-    }
-
-    // Toggle theme on button click
-    toggleBtn.addEventListener("click", () => {
-        document.body.classList.toggle("light-mode");
-        
-        // Add smooth transition animation
-        document.body.style.transition = "all 0.5s ease";
-
-        if (document.body.classList.contains("light-mode")) {
-            localStorage.setItem("theme", "light");
-            toggleBtn.innerText = "☀️ Light Mode";
-        } else {
-            localStorage.setItem("theme", "dark");
-            toggleBtn.innerText = "🌙 Dark Mode";
-        }
-    });
-}
 
 // Add loading animation on page load
 window.addEventListener("load", () => {

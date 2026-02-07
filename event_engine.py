@@ -17,8 +17,19 @@ class EventEngine:
             "smoking": "--",
             "hypertension": "--",
 
+            # Activity from accelerometer
+            "activity": "Unknown",
+
+            # Environmental Data
+            "humidity": "--",
+            "room_temp": "--",
+            "aqi": "--",
+
             # Intruder image
-            "intruder_image": None
+            "intruder_image": None,
+
+            # Manual Emergency Status
+            "manual_emergency": False
         }
 
     def process_event(self, event_type, image_path=None):
@@ -50,3 +61,28 @@ class EventEngine:
         self.state["gender"] = gender
         self.state["smoking"] = smoking
         self.state["hypertension"] = hypertension
+
+    def update_activity(self, activity):
+        """Update patient activity status from accelerometer"""
+        self.state["activity"] = activity
+        return self.state
+
+    def update_env_data(self, humidity, room_temp, aqi):
+        """Update environmental metrics"""
+        self.state["humidity"] = humidity
+        self.state["room_temp"] = room_temp
+        self.state["aqi"] = aqi
+        return self.state
+
+    def update_emergency(self, status):
+        """Update manual emergency button status"""
+        self.state["manual_emergency"] = bool(status)
+        if status:
+            self.state["alert"] = "MANUAL EMERGENCY"
+        elif self.state["alert"] == "MANUAL EMERGENCY":
+            self.state["alert"] = "None"
+        return self.state
+
+
+
+

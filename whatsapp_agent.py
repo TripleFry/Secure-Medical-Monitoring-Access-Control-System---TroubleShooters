@@ -7,8 +7,16 @@ class WhatsAppAgent:
         self.to_number = to_number
 
     def send_alert(self, message):
-        self.client.messages.create(
-            body=message,
-            from_=self.from_number,
-            to=self.to_number
-        )
+        print(f"📡 WhatsApp: Attempting to send alert from {self.from_number} to {self.to_number}...")
+        try:
+            msg = self.client.messages.create(
+                body=message,
+                from_=self.from_number,
+                to=self.to_number
+            )
+            print(f"✅ WhatsApp: Message sent! SID: {msg.sid}")
+            return True
+        except Exception as e:
+            print(f"❌ WhatsApp: Send Error: {e}")
+            return False
+

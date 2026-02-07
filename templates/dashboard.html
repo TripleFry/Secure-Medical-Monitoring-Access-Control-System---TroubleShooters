@@ -88,18 +88,75 @@
                 <!-- Security & Medical Status -->
                 <div class="grid grid-2 mb-32">
                     <div class="card">
-                        <h3 class="card-title">🔐 Access Control Status</h3>
-                        <div id="access" class="card-value" style="font-size: 1.5rem;">Monitoring...</div>
+                        <h3 class="card-title">🔐 Access Status</h3>
+                        <div class="card-value" id="access" style="font-size: 1.25rem; font-weight: 600;">
+                            No activity
+                        </div>
+                    </div>
+
+                    <!-- Activity Status Card -->
+                    <div class="card">
+                        <h3 class="card-title">🎯 Patient Activity</h3>
+                        <div class="card-value" id="activity-status" style="font-size: 1.25rem; font-weight: 600;">
+                            Unknown
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-500);">
+                            From accelerometer
+                        </div>
                     </div>
 
                     <div class="card">
                         <h3 class="card-title">⚕️ Medical Alert Status</h3>
-                        <div id="alert" class="card-value" style="font-size: 1.5rem;">All Systems Normal</div>
+                        <div id="alert" class="card-value" style="font-size: 1.25rem;">All Systems Normal</div>
+                    </div>
+
+                    <!-- Manual Emergency Button Card -->
+                    <div class="card">
+                        <h3 class="card-title">🆘 Help Button Status</h3>
+                        <div id="manual-emergency" class="card-value" style="font-size: 1.25rem; font-weight: 600;">
+                            Normal
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-500);">
+                            Manual circuit trigger
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Environmental Monitor -->
+                <h2 style="margin-top: 32px; margin-bottom: 16px; color: var(--gray-700); font-size: 1.25rem;">🌐
+                    Environmental Monitor</h2>
+                <div class="grid grid-3 mb-32">
+                    <div class="card">
+                        <h3 class="card-title">💧 Humidity</h3>
+                        <div class="card-value">
+                            <span id="humidity">--</span>
+                            <span class="card-unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🌡️ Room Temp</h3>
+                        <div class="card-value">
+                            <span id="room_temp">--</span>
+                            <span class="card-unit">°C</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🌫️ Air Quality (AQI)</h3>
+                        <div class="card-value">
+                            <span id="aqi">--</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <span class="badge badge-success" id="aqiStatus">Good</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Vital Signs -->
                 <h2 style="margin-bottom: 16px; color: var(--gray-700); font-size: 1.25rem;">📊 Vital Signs Monitor</h2>
+
                 <div class="grid grid-3">
 
                     <div class="card">
@@ -183,6 +240,55 @@
                     alertEl.className = "card-value status-success";
                 }
 
+                // Update activity status
+                const activityEl = document.getElementById("activity-status");
+                if (activityEl) {
+                    activityEl.textContent = data.activity || "Unknown";
+                }
+
+                // Update manual emergency button
+                const emergencyEl = document.getElementById("manual-emergency");
+                const bannerEl = document.getElementById("alertBanner");
+                if (emergencyEl) {
+                    const isEmergency = data.manual_emergency;
+                    emergencyEl.textContent = isEmergency ? "🚨 EMERGENCY PRESSED" : "Normal";
+                    emergencyEl.className = isEmergency ? "card-value status-danger" : "card-value status-success";
+
+                    if (isEmergency) {
+                        showAlertBanner("🆘 MANUAL EMERGENCY: Patient has pressed the help button!", "danger");
+                    } else if (data.alert === "None" && (data.risk !== "High")) {
+                        // Hide banner if everything is normal
+                        if (bannerEl) bannerEl.style.display = "none";
+                    }
+                }
+
+
+
+                // Update environmental data
+                document.getElementById("humidity").textContent = data.humidity || "--";
+                document.getElementById("room_temp").textContent = data.room_temp || "--";
+
+                const aqiEl = document.getElementById("aqi");
+                const aqiStatus = document.getElementById("aqiStatus");
+                if (aqiEl && aqiStatus) {
+                    const aqiValue = data.aqi || "--";
+                    aqiEl.textContent = aqiValue;
+
+                    if (aqiValue !== "--") {
+                        const val = parseInt(aqiValue);
+                        if (val > 100) {
+                            aqiStatus.className = "badge badge-danger";
+                            aqiStatus.textContent = "Poor";
+                        } else if (val > 50) {
+                            aqiStatus.className = "badge badge-warning";
+                            aqiStatus.textContent = "Moderate";
+                        } else {
+                            aqiStatus.className = "badge badge-success";
+                            aqiStatus.textContent = "Good";
+                        }
+                    }
+                }
+
                 // Update vitals
                 updateVital("hr", data.heart_rate, 60, 100);
                 updateVital("spo2", data.spo2, 95, 100);
@@ -256,6 +362,8 @@
         setInterval(fetchData, 2000);
         fetchData();
     </script>
+
+    <script src="/static/theme.js"></script>
 
 </body>
 
