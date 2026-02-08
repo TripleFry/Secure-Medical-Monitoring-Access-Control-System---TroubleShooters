@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for, flash
+from flask_cors import CORS
 from event_engine import EventEngine
 from health_agent import HealthAgent
 from clinical_agent import ClinicalAgent
 from whatsapp_agent import WhatsAppAgent
 import os
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 from dotenv import load_dotenv
 from db import get_or_create_patient, log_vitals
 from db import get_connection
@@ -12,7 +15,10 @@ from sqlalchemy import text
 
 # Import auth functions
 try:
-    from auth import create_users_table, create_user, authenticate_user, get_user_by_email
+    from auth import (
+        create_users_table, create_user, authenticate_user, 
+        get_user_by_email, verify_user_token
+    )
     AUTH_ENABLED = True
     # Try to create users table
     try:
@@ -27,16 +33,20 @@ except ImportError as e:
     AUTH_ENABLED = False
 
 
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For session management
 
+# Enable CORS for all routes (optional token validation for sensitive endpoints)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Optional: Load API token from env for /esp32 and /activity endpoints
+API_TOKEN = os.getenv("SENSOR_API_TOKEN", None)
+
 @app.before_request
 def log_request_info():
-    print(f"📡 Request: {request.method} {request.url} from {request.remote_addr}")
+    print(f"[REQUEST] {request.method} {request.path} from {request.remote_addr}")
 
-
-# Load environment variables
-load_dotenv()
 
 # Initialize components
 engine = EventEngine()
@@ -62,6 +72,43 @@ whatsapp_agent = WhatsAppAgent(
     TWILIO_FROM,
     TWILIO_TO
 )
+
+# SMTP Configuration (Placeholder)
+SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 1025))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASS = os.getenv("SMTP_PASS", "")
+
+def send_verification_email(email, token):
+    """Send a verification email to the user (Placeholder/Console logger)"""
+    verification_link = f"http://{request.host}/verify?email={email}&token={token}"
+    
+    # In a real app, you would use smtplib here. 
+    # For now, we'll log it to the console so the user can verify.
+    print("\n" + "="*50)
+    print("📧 VERIFICATION EMAIL SENT 📧")
+    print(f"To: {email}")
+    print(f"Link: {verification_link}")
+    print("="*50 + "\n")
+    
+    # Optional logic for real email sending if configured
+    if SMTP_USER and SMTP_PASS:
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            
+            msg = MIMEText(f"Please click the link below to verify your email:\n{verification_link}")
+            msg['Subject'] = "Verify your HealthGuard Account"
+            msg['From'] = SMTP_USER
+            msg['To'] = email
+            
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls()
+                server.login(SMTP_USER, SMTP_PASS)
+                server.send_message(msg)
+            print("✅ Real email sent successfully!")
+        except Exception as e:
+            print(f"❌ Failed to send real email: {e}")
 
 # Authentication routes
 @app.route("/login", methods=["GET", "POST"])
@@ -108,13 +155,12 @@ def signup():
             # Use database with bcrypt
             result = create_user(email, password, fullname, role)
             if result["success"]:
-                # Auto-login after signup
-                session["logged_in"] = True
-                session["user_id"] = result["user_id"]
-                session["user_email"] = email
-                session["user_name"] = fullname
-                session["user_role"] = role
-                return redirect(url_for("dashboard"))
+                # Send verification email
+                send_verification_email(email, result["verification_token"])
+                
+                # Show success message instead of auto-login
+                return render_template("signup.html", 
+                    success="Account created! Please check your email and click the verification link to proceed.")
             else:
                 error_msg = result.get("error", "Signup failed")
                 if "Duplicate entry" in error_msg:
@@ -130,6 +176,19 @@ def signup():
             
     return render_template("signup.html")
 
+@app.route("/verify")
+def verify():
+    email = request.args.get("email")
+    token = request.args.get("token")
+    
+    if not email or not token:
+        return render_template("verify.html", error="Invalid verification link")
+    
+    if verify_user_token(email, token):
+        return render_template("verify.html", success=True)
+    else:
+        return render_template("verify.html", error="Invalid or expired token")
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -142,6 +201,54 @@ def dashboard():
 @app.route("/alerts")
 def alerts_page():
     return render_template("alerts.html")
+
+@app.route("/report")
+def download_report():
+    state = engine.state
+    
+    report_content = f"""
+=========================================
+      HEALTHGUARD MEDICAL REPORT
+=========================================
+Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+PATIENT INFORMATION
+-------------------
+Name:         {state.get('name', 'N/A')}
+Age:          {state.get('age', 'N/A')}
+Gender:       {state.get('gender', 'N/A')}
+Smoking:      {state.get('smoking', 'N/A')}
+Hypertension: {state.get('hypertension', 'N/A')}
+
+LATEST VITALS
+-------------
+Heart Rate:   {state.get('heart_rate', '--')} BPM
+SpO2:         {state.get('spo2', '--')}%
+Temperature:  {state.get('temperature', '--')}°C
+Health Risk:  {state.get('risk', '--')}
+
+ENVIRONMENT
+-----------
+Room Temp:    {state.get('room_temp', '--')}°C
+Humidity:     {state.get('humidity', '--')}%
+AQI:          {state.get('aqi', '--')}
+
+ACTIVITY & STATUS
+-----------------
+Current Activity: {state.get('activity', 'Unknown')}
+Alert Status:     {state.get('alert', 'None')}
+
+-----------------------------------------
+This is an automated report generated by
+HealthGuard Medical Monitoring System.
+=========================================
+"""
+    from flask import Response
+    return Response(
+        report_content,
+        mimetype="text/plain",
+        headers={"Content-disposition": "attachment; filename=Patient_Report_Ramesh_Gupta.txt"}
+    )
 
 
 
@@ -197,14 +304,17 @@ Immediate action required.
 
 @app.route("/activity", methods=["POST"])
 def receive_activity():
-    """Endpoint to receive accelerometer activity data"""
+    """Endpoint to receive posture/activity data from detector or ESP32"""
     data = request.json
     activity = data.get("activity", "Unknown")
+    device_id = data.get("device_id", "unknown")
     
     # Validate activity value
     valid_activities = ["Sitting", "Standing", "Sleeping", "Unknown"]
     if activity not in valid_activities:
         return jsonify({"error": "Invalid activity value"}), 400
+    
+    print(f"[ACTIVITY] Update: {activity} from {device_id}")
     
     # Update state
     state = engine.update_activity(activity)
@@ -241,37 +351,64 @@ def esp32_post():
     try:
         raw_data = request.json or {}
         
-        # Sanitize keys: UART corruption might lead to non-string keys in MicroPython
+        # Sanitize keys: Robust case-insensitive parsing
         data = {}
         for k, v in raw_data.items():
-            data[str(k)] = v
+            data[str(k).lower().strip()] = v
             
-        print(f"📥 Received ESP32 Data: {data}")
+        print(f"[ESP32] Received Data: {data}")
 
 
         # Vital key mapping
-        heart_rate = data.get("heart_rate") or data.get("hr") or data.get("pulse")
-        spo2 = data.get("spo2")
-        temperature = data.get("temperature") or data.get("temp")
+        # Vital key mapping with non-zero prioritization
+        def get_best_vital(keys):
+            best_val = None
+            for k in keys:
+                val = data.get(k)
+                if val is not None:
+                    # Prefer non-zero values (handles both int and string '0')
+                    is_zero = (str(val).strip() == "0" or val == 0)
+                    is_best_zero = (best_val is None or str(best_val).strip() == "0" or best_val == 0)
+                    
+                    if best_val is None or (is_best_zero and not is_zero):
+                        best_val = val
+            return best_val
 
-        # Demographic data
-        device_id = data.get("device_id")
-        name = data.get("name") or device_id or "ESP32"
-        age = data.get("age")
-        gender = data.get("gender", "Unknown")
-        smoking = data.get("smoking", False)
-        hypertension = data.get("hypertension", False)
-        weight = data.get("weight")
+        heart_rate = get_best_vital(["heart_rate", "hr", "pulse", "bpm"])
+        spo2 = get_best_vital(["spo2", "spo", "ox", "oxygen"])
+        temperature = get_best_vital(["temperature", "temp", "t"])
+
+        print(f"DEBUG: Mapped Vitals -> HR: {heart_rate}, SpO2: {spo2}, Temp: {temperature}")
+
+        # Demographic data (Strictly Hardcoded)
+        name = "Ramesh Gupta"
+        age = 20
+        gender = "male"
+        smoking = False
+        hypertension = False
+        weight = 70.0  # Strictly Hardcoded
+        
+        # Parameters remaining in payload
         height = data.get("height")
+
+
+
+
 
         # Environmental data
         humidity = data.get("humidity")
         room_temp = data.get("room_temp")
         aqi = data.get("aqi")
         emergency = data.get("emergency")  # Manual button status
-
+        fall = data.get("fall")  # Fall detection status
+        posture = data.get("posture")  # Activity/Posture status
 
         timestamp = datetime.utcnow().isoformat()
+
+        # Update activity if provided
+        if posture:
+            engine.update_activity(posture)
+
 
         # Always update environmental data if provided
         if humidity is not None or room_temp is not None or aqi is not None:
@@ -292,10 +429,32 @@ def esp32_post():
             engine.update_emergency(emergency)
             if emergency:
                 print("🚨 MANUAL EMERGENCY BUTTON PRESSED!")
+                emergency_alert = f"🆘 EMERGENCY: Help button pressed by {name}! Please respond immediately."
+                whatsapp_agent.send_alert(emergency_alert)
 
+        # Update fall status and alert
+        if fall is not None:
+            engine.update_fall(fall)
+            if fall:
+                print("🚨 FALL DETECTED! Sending alert...")
+                fall_alert = f"⚠️ EMERGENCY: Fall detected for {name}! Please check the patient immediately."
+                whatsapp_agent.send_alert(fall_alert)
+
+        # Update Engine for immediate dashboard feedback (Partial or Full)
+        if heart_rate is not None or spo2 is not None or temperature is not None:
+            engine.update_vitals(
+                heart_rate=heart_rate,
+                spo2=spo2,
+                temperature=temperature,
+                name=name,
+                age=age,
+                gender=gender,
+                smoking=smoking,
+                hypertension=hypertension
+            )
 
         # Database logging for ALL vitals (Partial or Full)
-        if heart_rate or spo2 or temperature:
+        if heart_rate is not None or spo2 is not None or temperature is not None:
             try:
                 # Use a payload dict for patient lookup
                 lookup_payload = {
@@ -509,11 +668,13 @@ def charts_page():
 
 
 
-@app.route("/api/history/vitals/<int:patient_id>")
-def vitals_history(patient_id):
+@app.route("/api/history/vitals")
+def vitals_history():
     try:
         from db import get_historical_vitals
-        data = get_historical_vitals(patient_id)
+        # For single patient, always use patient_id 6 (Ramesh Gupta)
+        # or we could fetch the first patient ID from DB dynamically
+        data = get_historical_vitals(6) 
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

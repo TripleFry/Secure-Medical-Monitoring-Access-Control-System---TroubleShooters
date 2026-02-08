@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - HealthGuard Medical System</title>
+    <link rel="stylesheet" href="/static/medical.css">
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-icon" style="margin: 0 auto 16px;">🏥</div>
+                <h1>Email Verification</h1>
+                <p>HealthGuard Medical Monitoring System</p>
+            </div>
+
+            <div class="auth-body" style="text-align: center;">
+
+                {% if success %}
+                <div class="alert alert-success" style="margin-bottom: 20px;">
+                    ✅ <strong>Verification Successful!</strong> Your email has been verified.
+                </div>
+                <p style="margin-bottom: 24px; color: var(--gray-600);">
+                    You can now access your dashboard and monitor patient health.
+                </p>
+                <a href="/login" class="btn btn-primary w-full">
+                    Go to Login
+                </a>
+                {% else %}
+                <div class="alert alert-danger" style="margin-bottom: 20px;">
+                    ❌ <strong>Verification Failed</strong>
+                    <br>
+                    {{ error or "The verification link is invalid or has expired." }}
+                </div>
+                <p style="margin-bottom: 24px; color: var(--gray-600);">
+                    If you're having trouble, please contact your administrator.
+                </p>
+                <a href="/signup" class="btn btn-secondary w-full">
+                    Back to Signup
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/theme.js"></script>
+
+</body>
+
+</html>

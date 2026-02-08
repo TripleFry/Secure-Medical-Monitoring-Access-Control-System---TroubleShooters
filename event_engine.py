@@ -11,11 +11,11 @@ class EventEngine:
             "risk": "--",
 
             # Profile
-            "name": "John Doe",
-            "age": "--",
-            "gender": "--",
-            "smoking": "--",
-            "hypertension": "--",
+            "name": "Ramesh Gupta",
+            "age": "20",
+            "gender": "male",
+            "smoking": "False",
+            "hypertension": "False",
 
             # Activity from accelerometer
             "activity": "Unknown",
@@ -29,7 +29,10 @@ class EventEngine:
             "intruder_image": None,
 
             # Manual Emergency Status
-            "manual_emergency": False
+            "manual_emergency": False,
+
+            # Fall Status
+            "fall_detected": False
         }
 
     def process_event(self, event_type, image_path=None):
@@ -48,19 +51,19 @@ class EventEngine:
 
         return self.state
 
-    def update_vitals(self, heart_rate, spo2, temperature, risk,
-                      age, gender, smoking, hypertension, name="John Doe"):
+    def update_vitals(self, heart_rate=None, spo2=None, temperature=None, risk=None,
+                      age=None, gender=None, smoking=None, hypertension=None, name=None):
 
-        self.state["heart_rate"] = heart_rate
-        self.state["spo2"] = spo2
-        self.state["temperature"] = temperature
-        self.state["risk"] = risk
+        if heart_rate is not None: self.state["heart_rate"] = heart_rate
+        if spo2 is not None: self.state["spo2"] = spo2
+        if temperature is not None: self.state["temperature"] = temperature
+        if risk is not None: self.state["risk"] = risk
 
-        self.state["name"] = name
-        self.state["age"] = age
-        self.state["gender"] = gender
-        self.state["smoking"] = smoking
-        self.state["hypertension"] = hypertension
+        if name is not None: self.state["name"] = name
+        if age is not None: self.state["age"] = age
+        if gender is not None: self.state["gender"] = gender
+        if smoking is not None: self.state["smoking"] = smoking
+        if hypertension is not None: self.state["hypertension"] = hypertension
 
     def update_activity(self, activity):
         """Update patient activity status from accelerometer"""
@@ -82,6 +85,16 @@ class EventEngine:
         elif self.state["alert"] == "MANUAL EMERGENCY":
             self.state["alert"] = "None"
         return self.state
+
+    def update_fall(self, status):
+        """Update fall detection status"""
+        self.state["fall_detected"] = bool(status)
+        if status:
+            self.state["alert"] = "FALL DETECTED"
+        elif self.state["alert"] == "FALL DETECTED":
+            self.state["alert"] = "None"
+        return self.state
+
 
 
 

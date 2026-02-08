@@ -45,10 +45,6 @@
                 </select>
             </div>
 
-            <div class="profile-card">
-                <div class="profile-label">Patient ID</div>
-                <input type="number" class="form-input" id="patientId" value="1" min="1">
-            </div>
 
             <button class="btn btn-primary w-full" onclick="loadCharts()">
                 📊 Load Data
@@ -77,27 +73,21 @@
                 </div>
 
                 <!-- Charts Grid -->
+                <div class="page-header mt-32">
+                    <h1 class="page-title">🩺 Health Analytics</h1>
+                    <p class="page-subtitle">Historical vital signs trends</p>
+                </div>
+
                 <div class="card mb-24">
                     <h3 class="card-title">❤️ Heart Rate Trends</h3>
-                    <canvas id="hrChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <div class="card mb-24">
-                    <h3 class="card-title">🫁 Blood Oxygen (SpO₂) Trends</h3>
-                    <canvas id="spo2Chart" style="max-height: 300px;"></canvas>
-                </div>
-
-
-                <div class="card mb-24">
-
-                    <h3 class="card-title">🌡️ Body Temperature Trends</h3>
-                    <canvas id="tempChart" style="max-height: 300px;"></canvas>
+                    <canvas id="heartRateChart" style="max-height: 300px;"></canvas>
                 </div>
 
                 <div class="page-header mt-32">
                     <h1 class="page-title">🌍 Environmental Analytics</h1>
                     <p class="page-subtitle">Historical room conditions and air quality</p>
                 </div>
+
 
                 <div class="card mb-24">
                     <h3 class="card-title">💧 Humidity Trends</h3>
@@ -130,11 +120,29 @@
             loadCharts();
         });
 
+        async function syncPatientAndLoad() {
+            try {
+                // 1. Fetch current patient state from server
+                const response = await fetch('/data');
+                const data = await response.json();
+
+                // 2. Automatically set the patientId input if found
+                if (data.patient_id) {
+                    document.getElementById('patientId').value = data.patient_id;
+                }
+
+                // 3. Load the charts
+                loadCharts();
+            } catch (error) {
+                console.error("Error syncing patient:", error);
+                loadCharts(); // Fallback to whatever is in the input
+            }
+        }
+
         function loadCharts() {
-            const patientId = document.getElementById('patientId').value;
             // The charts.js file handles the actual chart rendering
             if (typeof window.renderCharts === 'function') {
-                window.renderCharts(patientId);
+                window.renderCharts();
             }
         }
     </script>

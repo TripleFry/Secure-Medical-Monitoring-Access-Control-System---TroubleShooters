@@ -1,6 +1,7 @@
 import bcrypt
 from db import get_connection
 from datetime import datetime
+import secrets
 
 def create_users_table():
     """Create users table if it doesn't exist"""
@@ -14,6 +15,8 @@ def create_users_table():
         password_hash VARCHAR(255) NOT NULL,
         full_name VARCHAR(255) NOT NULL,
         role VARCHAR(50) NOT NULL,
+        is_verified BOOLEAN DEFAULT 0,
+        verification_token VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP NULL,
         INDEX idx_email (email)
@@ -46,19 +49,22 @@ def create_user(email, password, full_name, role):
         # Hash the password
         password_hash = hash_password(password)
         
+        # Generate verification token
+        verification_token = secrets.token_urlsafe(32)
+        
         # Insert user
         insert_query = """
-        INSERT INTO users (email, password_hash, full_name, role)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO users (email, password_hash, full_name, role, verification_token)
+        VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_query, (email, password_hash, full_name, role))
+        cursor.execute(insert_query, (email, password_hash, full_name, role, verification_token))
         conn.commit()
         
         user_id = cursor.lastrowid
         cursor.close()
         conn.close()
         
-        return {"success": True, "user_id": user_id}
+        return {"success": True, "user_id": user_id, "verification_token": verification_token}
     
     except Exception as e:
         print(f"Error creating user: {e}")
@@ -79,6 +85,12 @@ def authenticate_user(email, password):
             cursor.close()
             conn.close()
             return {"success": False, "error": "Invalid email or password"}
+        
+        # Check if verified
+        if not user.get('is_verified'):
+            cursor.close()
+            conn.close()
+            return {"success": False, "error": "Please verify your email before logging in."}
         
         # Verify password
         if verify_password(password, user['password_hash']):
@@ -126,6 +138,33 @@ def get_user_by_email(email):
     except Exception as e:
         print(f"Error getting user: {e}")
         return None
+
+def verify_user_token(email, token):
+    """Verify a user's email using their token"""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Check if user and token match
+        query = "SELECT id FROM users WHERE email = %s AND verification_token = %s"
+        cursor.execute(query, (email, token))
+        user = cursor.fetchone()
+        
+        if user:
+            # Update verification status
+            update_query = "UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = %s"
+            cursor.execute(update_query, (user['id'],))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return True
+        
+        cursor.close()
+        conn.close()
+        return False
+    except Exception as e:
+        print(f"Error verifying token: {e}")
+        return False
 
 # Initialize database table when module is imported
 if __name__ == "__main__":

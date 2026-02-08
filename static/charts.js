@@ -75,24 +75,18 @@ function createChart(id, label, labels, data, color, unit) {
     });
 }
 
-async function renderCharts(patientId) {
+async function renderCharts() {
     // 1. Render Vitals Charts
-    const vitalsData = await fetchHistory(`/api/history/vitals/${patientId}`);
+    const vitalsData = await fetchHistory('/api/history/vitals');
     if (vitalsData && vitalsData.length > 0) {
         const timestamps = vitalsData.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-
-        createChart('hrChart', 'Heart Rate', timestamps, vitalsData.map(d => d.heart_rate), '#ef4444', 'bpm');
-        createChart('spo2Chart', 'SpO2', timestamps, vitalsData.map(d => d.spo2), '#3b82f6', '%');
-        createChart('tempChart', 'Body Temp', timestamps, vitalsData.map(d => d.temperature), '#10b981', '°C');
+        createChart('heartRateChart', 'Heart Rate', timestamps, vitalsData.map(d => d.heart_rate), '#ef4444', 'bpm');
     }
-
-
 
     // 2. Render Environmental Charts
     const envData = await fetchHistory('/api/history/env');
     if (envData && envData.length > 0) {
         const timestamps = envData.map(d => new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-
         createChart('humidityChart', 'Humidity', timestamps, envData.map(d => d.humidity), '#06b6d4', '%');
         createChart('roomTempChart', 'Room Temp', timestamps, envData.map(d => d.room_temp), '#f59e0b', '°C');
         createChart('aqiChart', 'Air Quality (AQI)', timestamps, envData.map(d => d.aqi), '#8b5cf6', 'index');

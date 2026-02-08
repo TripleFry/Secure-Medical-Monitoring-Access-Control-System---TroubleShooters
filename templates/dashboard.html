@@ -37,28 +37,39 @@
 
             <div class="profile-card">
                 <div class="profile-label">Patient Name</div>
-                <div class="profile-value" id="name">John Doe</div>
+                <div class="profile-value" id="name">Ramesh Gupta</div>
             </div>
 
             <div class="profile-card">
                 <div class="profile-label">Age</div>
-                <div class="profile-value" id="age">--</div>
+                <div class="profile-value" id="age">20</div>
             </div>
 
             <div class="profile-card">
                 <div class="profile-label">Gender</div>
-                <div class="profile-value" id="gender">--</div>
+                <div class="profile-value" id="gender">Male</div>
             </div>
 
             <div class="profile-card">
                 <div class="profile-label">Smoking Status</div>
-                <div class="profile-value" id="smoking">--</div>
+                <div class="profile-value" id="smoking">No</div>
             </div>
 
             <div class="profile-card">
                 <div class="profile-label">Hypertension</div>
-                <div class="profile-value" id="hypertension">--</div>
+                <div class="profile-value" id="hypertension">No</div>
             </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Weight</div>
+                <div class="profile-value">70 kg</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-label">Height</div>
+                <div class="profile-value" id="height-sidebar">1.75 m</div>
+            </div>
+
 
             <h2 style="margin-top: 24px;">Quick Actions</h2>
             <div class="sidebar-nav">
@@ -101,14 +112,10 @@
                             Unknown
                         </div>
                         <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-500);">
-                            From accelerometer
+
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h3 class="card-title">⚕️ Medical Alert Status</h3>
-                        <div id="alert" class="card-value" style="font-size: 1.25rem;">All Systems Normal</div>
-                    </div>
 
                     <!-- Manual Emergency Button Card -->
                     <div class="card">
@@ -118,6 +125,17 @@
                         </div>
                         <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-500);">
                             Manual circuit trigger
+                        </div>
+                    </div>
+
+                    <!-- Fall Detection Card -->
+                    <div class="card">
+                        <h3 class="card-title">🤕 Fall Status</h3>
+                        <div id="fall-status" class="card-value" style="font-size: 1.25rem; font-weight: 600;">
+                            Normal
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-500);">
+                            Accelerometer detection
                         </div>
                     </div>
 
@@ -233,11 +251,13 @@
 
                 // Update alert
                 const alertEl = document.getElementById("alert");
-                alertEl.textContent = data.alert || "All Systems Normal";
-                if (data.alert && data.alert !== "All Clear") {
-                    alertEl.className = "card-value status-danger";
-                } else {
-                    alertEl.className = "card-value status-success";
+                if (alertEl) {
+                    alertEl.textContent = data.alert || "All Systems Normal";
+                    if (data.alert && data.alert !== "All Clear") {
+                        alertEl.className = "card-value status-danger";
+                    } else {
+                        alertEl.className = "card-value status-success";
+                    }
                 }
 
                 // Update activity status
@@ -248,7 +268,9 @@
 
                 // Update manual emergency button
                 const emergencyEl = document.getElementById("manual-emergency");
+                const fallEl = document.getElementById("fall-status");
                 const bannerEl = document.getElementById("alertBanner");
+
                 if (emergencyEl) {
                     const isEmergency = data.manual_emergency;
                     emergencyEl.textContent = isEmergency ? "🚨 EMERGENCY PRESSED" : "Normal";
@@ -256,11 +278,24 @@
 
                     if (isEmergency) {
                         showAlertBanner("🆘 MANUAL EMERGENCY: Patient has pressed the help button!", "danger");
-                    } else if (data.alert === "None" && (data.risk !== "High")) {
-                        // Hide banner if everything is normal
-                        if (bannerEl) bannerEl.style.display = "none";
                     }
                 }
+
+                if (fallEl) {
+                    const isFall = data.fall_detected;
+                    fallEl.textContent = isFall ? "🚨 FALL DETECTED" : "Normal";
+                    fallEl.className = isFall ? "card-value status-danger" : "card-value status-success";
+
+                    if (isFall) {
+                        showAlertBanner("🚨 EMERGENCY: Patient has fallen down!", "danger");
+                    }
+                }
+
+                // Hide banner only if NO alerts are active
+                if (!data.manual_emergency && !data.fall_detected && data.alert === "None" && data.risk !== "High") {
+                    if (bannerEl) bannerEl.style.display = "none";
+                }
+
 
 
 
@@ -321,9 +356,9 @@
                 }
 
                 // Update profile
-                document.getElementById("name").textContent = data.name || "John Doe";
-                document.getElementById("age").textContent = data.age || "--";
-                document.getElementById("gender").textContent = data.gender || "--";
+                document.getElementById("name").textContent = data.name || "Ramesh Gupta";
+                document.getElementById("age").textContent = data.age || "20";
+                document.getElementById("gender").textContent = data.gender || "male";
                 document.getElementById("smoking").textContent = data.smoking ? "Yes" : "No";
                 document.getElementById("hypertension").textContent = data.hypertension ? "Yes" : "No";
 
@@ -358,8 +393,8 @@
             banner.style.display = "block";
         }
 
-        // Auto-refresh every 2 seconds
-        setInterval(fetchData, 2000);
+        // Auto-refresh every 1 second
+        setInterval(fetchData, 1000);
         fetchData();
     </script>
 

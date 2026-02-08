@@ -47,9 +47,9 @@ while True:
                 result = DeepFace.verify(
                     img1_path=temp_img,
                     img2_path=img_path,
-                    enforce_detection=True,  # Ensure face is detected
-                    model_name="VGG-Face",  # More accurate model
-                    distance_metric="cosine"  # Use cosine similarity
+                    enforce_detection=False,  # Don't fail if face not centered/detected
+                    model_name="VGG-Face",
+                    distance_metric="cosine"
                 )
 
                 # Get the distance (lower = more similar)
@@ -57,9 +57,9 @@ while True:
                 
                 print(f"Comparing with {os.path.basename(img_path)}: distance={distance:.4f}")
                 
-                # Use stricter threshold (0.35 instead of default 0.68)
-                # Only accept if distance is less than 0.35 AND it's the best match
-                if distance < 0.35 and distance < best_match_distance:
+                # Use loosened threshold (0.45 instead of 0.35)
+                # Only accept if distance is less than 0.45 AND it's the best match
+                if distance < 0.4 and distance < best_match_distance:
                     best_match_distance = distance
                     best_match_name = os.path.basename(img_path).split(".")[0]
                     recognized = True
@@ -69,7 +69,7 @@ while True:
                 pass
         
         # Use the best match only if it's good enough
-        if recognized and best_match_distance < 0.35:
+        if recognized and best_match_distance < 0.45:
             name = best_match_name
             print(f"Best match: {name} with distance: {best_match_distance:.4f}")
         else:

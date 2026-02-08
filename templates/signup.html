@@ -26,6 +26,12 @@
                 </div>
                 {% endif %}
 
+                {% if success %}
+                <div class="alert alert-success" style="margin-bottom: 20px;">
+                    {{ success }}
+                </div>
+                {% endif %}
+
                 <form action="/signup" method="POST" id="signupForm">
                     <div class="form-group">
                         <label class="form-label" for="fullname">Full Name</label>
